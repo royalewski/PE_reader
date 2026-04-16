@@ -1,0 +1,13 @@
+* TODO
+- [ ] Parse PE Characteristic flags
+- [X] Check for MZ Magic
+- [X] Check for PE\0\0 magic
+- [X] Check if e_lfanew points inside a file
+- [ ] Check value of SizeOfOptionalHeader
+- [ ] Check safety of fread and fseek
+- [X] Unify stdints and C types
+- [ ] Interpetation for Charactersistics, DLL characteristics,
+      Subsystem,
+- [X] Interpretation for Machines
+- [X] Continue with rest of pe_headers
+- [X] Divide project to between .h and .c files
