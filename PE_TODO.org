@@ -11,3 +11,5 @@
 - [X] Interpretation for Machines
 - [X] Continue with rest of pe_headers
 - [X] Divide project to between .h and .c files
+- [ ] Display of Machine in hex, DIsplay of PE-HEADER Characteristics with leading 0, Optional Header
+      MAGIC in hex, \n afet section header dword characteristics
