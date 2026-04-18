@@ -27,11 +27,11 @@ int main (int argc, char *argv[]){
 	printf("Not a PE file");
 	return(-1);
     }
-    GET_IMAGE_DOS_HEADER(buffer);
-    PE_HEADER(buffer,f);
-    PRINT_PE_HEADER();
+    get_image_dos_header(buffer);
+    get_pe_header(buffer,f);
+    print_pe_header();
 
-    Header_type header_type;
+    header_t header_type;
     header_type = get_optional_header(f);
     print_optional_header(header_type);
 
@@ -44,7 +44,7 @@ int main (int argc, char *argv[]){
     }
     get_all_section_headers(f, header_type, sections);
     print_all_section_headers(sections);
-
+    free(sections); 
     return(0);
 }
 

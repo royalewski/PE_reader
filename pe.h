@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define E_LFANEW                         0x3C
 #define PE_ADDR                          0x80
@@ -46,10 +47,11 @@ typedef enum {
     Type_64Bit = 1,
     Type_Rom = 2,
     Type_Unknown = 3,
-}Header_type;
+}header_t;
 
 #pragma pack(push,1)
 typedef struct IMAGE_DATA_DIRECTORY {
+
   uint32_t  VirtualAddress;
   uint32_t  Size;
 } IMAGE_DATA_DIRECTORY;
@@ -143,11 +145,12 @@ typedef struct{
 
 #pragma pack(pop)
 
-void GET_IMAGE_DOS_HEADER(uint8_t buffer[]);
-void PE_HEADER(uint8_t buffer[], FILE *f);
-Header_type get_optional_header(FILE *f);
-void PRINT_PE_HEADER(void);
-void print_optional_header(Header_type header_type);
-void checkMachine(uint16_t machineType);
-void get_all_section_headers(FILE *f, Header_type header_type, IMAGE_SECTION_HEADER *sections);
+void get_image_dos_header(uint8_t buffer[]);
+bool get_pe_header(uint8_t buffer[], FILE *f);
+header_t get_optional_header(FILE *f);
+void print_pe_header(void);
+void print_optional_header(header_t header_type);
+void check_machine(uint16_t machineType);
+void get_all_section_headers(FILE *f, header_t header_type, IMAGE_SECTION_HEADER *sections);
 void print_all_section_headers(IMAGE_SECTION_HEADER *sections);
+void check_characteristics(void);
