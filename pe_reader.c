@@ -1,50 +1,124 @@
 #include "pe.h"
 
+int main(int argc, char *argv[])
+{
+    exit_t err = correct;
 
+    if (argc == 1) {
+	printf("Usage: pe_reader.exe <input.exe|input.obj>\n");
+        return wrong_input;
+    } else if (argc > 2) {
+        printf("Too many arguments\n");
+        return wrong_input;
+    }
 
-int main (int argc, char *argv[]){
-    if(argc == 1){
-	printf("No input .exe file name\n");
-	return(-1);
-    }
-    else if(argc > 2){
-	printf("Too many arguments\n");
-	return(-1);
-    }
-    
-    unsigned char buffer[64];
     FILE *f = fopen(argv[1], "rb");
-    if(!f){
-	printf("Error opening file\n");
-	return(-1);
+    if (!f) {
+        printf("Error opening file\n");
+        return open_file_error;
     }
-    
-    if (fread(buffer, 1, 64, f) != 64) {
-	printf("Read error\n");
-	return -1;
-    }
-    if(buffer[0] != 'M' || buffer[1] != 'Z'){
-	printf("Not a PE file");
-	return(-1);
-    }
-    get_image_dos_header(buffer);
-    get_pe_header(buffer,f);
-    print_pe_header();
 
-    header_t header_type;
-    header_type = get_optional_header(f);
-    print_optional_header(header_type);
-
-    uint8_t sectionNum = pe.NumberOfSections;
-    IMAGE_SECTION_HEADER *sections;
-    sections = (IMAGE_SECTION_HEADER*) malloc(sectionNum*sizeof(IMAGE_SECTION_HEADER));
-    if(sections == NULL){
-	printf("Allocation Error!");
-	return -1;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return read_error;
     }
-    get_all_section_headers(f, header_type, sections);
-    print_all_section_headers(sections);
-    free(sections); 
-    return(0);
+
+    long pos = ftell(f);
+    if (pos < 0) {
+        fclose(f);
+        return read_error;
+    }
+
+    size_t file_size = (size_t)pos;
+    rewind(f);
+
+    if (file_size < COFF_HEADER_SIZE) {
+        printf("File too small to be PE/COFF\n");
+        fclose(f);
+        return too_small;
+    }
+
+    unsigned char magic[2] = {0};
+    if (fread(magic, 1, sizeof(magic), f) != sizeof(magic)) {
+        fclose(f);
+        return read_error;
+    }
+    rewind(f);
+
+    file_t file_type = File_Unknown;
+    header_t header_type = Header_Unknown;
+    bool is_exe = false;
+
+    if (magic[0] == 'M' && magic[1] == 'Z') {
+        is_exe = true;
+
+        err = get_image_dos_header(f, file_size);
+        if (err != correct) {
+            fclose(f);
+            return err;
+        }
+
+        print_dos_header();
+
+        err = get_coff_header(f, is_exe, &file_type);
+        if (err != correct) {
+            fclose(f);
+            return err;
+        }
+    } else {
+        err = get_coff_header(f, is_exe, &file_type);
+        if (err != correct) {
+            fclose(f);
+            return err;
+        }
+    }
+
+    print_coff_header();
+
+    if (file_type == File_EXE) {
+        err = get_optional_header(f, &header_type);
+        if (err != correct) {
+            fclose(f);
+            return err;
+        }
+
+        print_optional_header(header_type);
+    }
+    else {
+        printf("Format: COFF (Object file) - No Optional Header available.\n");
+        header_type = Header_COFF; /* temporary design choice */
+    }
+
+    uint16_t sectionNum = coff.NumberOfSections;
+    if (sectionNum > NUMBER_OF_SECTIONS_LIMIT) {
+        printf("Number of sections (%u) exceeds safe limit (%u)\n",
+               sectionNum,
+               NUMBER_OF_SECTIONS_LIMIT);
+        fclose(f);
+        return wrong_section_num;
+    }
+
+    if (sectionNum > 0) {
+        IMAGE_SECTION_HEADER *sections =
+            (IMAGE_SECTION_HEADER *)malloc(sectionNum * sizeof(IMAGE_SECTION_HEADER));
+
+        if (sections == NULL) {
+            printf("Allocation Error!\n");
+            fclose(f);
+            return allocation_error;
+        }
+
+        err = get_all_section_headers(f, header_type, sections);
+        if (err != correct) {
+            free(sections);
+            fclose(f);
+            return err;
+        }
+
+        print_all_section_headers(sections);
+        free(sections);
+    }
+
+    fclose(f);
+    return correct;
 }
-

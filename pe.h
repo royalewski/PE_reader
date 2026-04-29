@@ -7,9 +7,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define E_LFANEW                         0x3C
-#define PE_ADDR                          0x80
+#define SIGNATURE_SIZE                   4
+#define COFF_HEADER_SIZE                 20
+#define SECTION_HEADER_SIZE              40
+#define DOS_MIN_HEADER_SIZE              64
+#define NUMBER_OF_SECTIONS_LIMIT         96
 
+#define E_LFANEW                         0x3C
+
+#define SIGNATURE                        0x00004550
 #define FH_SIGNATURE                     0
 #define FH_MACHINE                       4
 #define FH_NUMBER_OF_SECTIONS            6
@@ -18,20 +24,20 @@
 #define FH_NUMBER_OF_SYMBOLS             16
 #define FH_SIZE_OF_OPTIONAL_HEADER       20
 #define FH_CHARACTERISTICS               22
-
 #define HEADER64_MAGIC                   0x20B
 #define HEADER32_MAGIC                   0x10B
 #define ROM_MAGIC                        0x107
 
 
+
 typedef struct{
     uint8_t e_magic[2];
     uint32_t e_lfanew;
-}IMAGE_DOS_HEADER;
-extern IMAGE_DOS_HEADER dos;
+}MIN_IMAGE_DOS_HEADER;
+extern MIN_IMAGE_DOS_HEADER dos;
 
+#pragma pack(push,1)
 typedef struct{
-    uint8_t Signature[4];
     uint16_t Machine;
     uint16_t NumberOfSections;
     uint32_t TimeDateStamp;
@@ -39,18 +45,42 @@ typedef struct{
     uint32_t NumberOfSymbols;
     uint16_t SizeOfOptionalHeader;
     uint16_t Characteristics;
-} IMAGE_PE_HEADER;
-extern IMAGE_PE_HEADER pe;
+} IMAGE_COFF_HEADER;
+#pragma pack(pop)
+extern IMAGE_COFF_HEADER coff;
 
 typedef enum {
-    Type_32Bit = 0,
-    Type_64Bit = 1,
-    Type_Rom = 2,
-    Type_Unknown = 3,
-}header_t;
+    Header_Unknown,
+    Header_32Bit,
+    Header_64Bit,
+    Header_ROM,
+    Header_COFF
+} header_t;
+
+typedef enum {
+    File_Unknown,
+    File_EXE,
+    File_COFF
+} file_t;
+
+typedef enum{
+    correct = 0,
+    wrong_input,
+    too_small,
+    read_error,
+    wrong_mz,
+    allocation_error,
+    wrong_elfanew,
+    wrong_pe,
+    wrong_machine,
+    wrong_num_of_sections,
+    open_file_error,
+    wrong_section_num
+}exit_t;
+
 
 #pragma pack(push,1)
-typedef struct IMAGE_DATA_DIRECTORY {
+typedef struct {
 
   uint32_t  VirtualAddress;
   uint32_t  Size;
@@ -140,17 +170,16 @@ typedef struct{
     uint16_t NumberOfLinenumbers;
     uint32_t Characteristics;
 }IMAGE_SECTION_HEADER;
-
-
-
 #pragma pack(pop)
 
-void get_image_dos_header(uint8_t buffer[]);
-bool get_pe_header(uint8_t buffer[], FILE *f);
-header_t get_optional_header(FILE *f);
-void print_pe_header(void);
+exit_t get_image_dos_header(FILE* f, uint64_t file_size);
+void print_dos_header(void);
+exit_t get_coff_header(FILE *f, bool is_exe, file_t* file_type);
+exit_t get_optional_header(FILE *f, header_t *header_type);
+exit_t print_coff_header(void);
 void print_optional_header(header_t header_type);
-void check_machine(uint16_t machineType);
-void get_all_section_headers(FILE *f, header_t header_type, IMAGE_SECTION_HEADER *sections);
+bool check_machine(uint16_t machineType);
+exit_t get_all_section_headers(FILE *f, header_t header_type, IMAGE_SECTION_HEADER *sections);
 void print_all_section_headers(IMAGE_SECTION_HEADER *sections);
 void check_characteristics(void);
+void check_section_flags(uint32_t section_characteristics);

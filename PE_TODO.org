@@ -1,12 +1,12 @@
 * TODO
-- [ ] Parse PE Characteristic flags
+- [X] Parse PE Characteristic flags
 - [X] Check for MZ Magic
 - [X] Check for PE\0\0 magic
 - [X] Check if e_lfanew points inside a file
-- [ ] Check value of SizeOfOptionalHeader
-- [ ] Check safety of fread and fseek
+- [X] Check value of SizeOfOptionalHeader
+- [X] Check safety of fread and fseek
 - [X] Unify stdints and C types
-- [ ] Interpetation for Charactersistics, DLL characteristics,
+- [X] Interpetation for Charactersistics, DLL characteristics,
       Subsystem,
 - [X] Interpretation for Machines
 - [X] Continue with rest of pe_headers
@@ -14,4 +14,7 @@
 - [X] Display of Machine in hex, DIsplay of PE-HEADER Characteristics with leading 0, Optional Header
       MAGIC in hex, \n after section header dword characteristics
 - [X] Unify naming convention
-- [ ] Check validity of input file format
+- [X] Check validity of input file format
+- [ ] Make sure program doesnt read from outside the file
+ 
+- [ ] Add error handler
