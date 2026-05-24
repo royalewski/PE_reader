@@ -1,5 +1,5 @@
 CC=gcc
-CLAGS= -Wall -Wextra -std=c99 -pedantic
+CFLAGS= -Wall -Wextra -std=c99 -pedantic
 
 pe_reader.exe: pe_reader.o pe_printer.o pe_parser.o
 	$(CC) $(CFLAGS) pe_parser.o pe_printer.o pe_reader.o -o pe_reader.exe
